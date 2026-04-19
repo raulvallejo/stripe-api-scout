@@ -54,7 +54,9 @@ Never commit API keys. Use a `.env` file locally and set these as secrets in you
 
 ## Known Gotchas
 
-None yet — will be updated as we build.
+- Chroma must be loaded at startup with the same embedding model used during ingestion (`text-embedding-3-small`) — mismatched models will return wrong results silently
+- `allow_credentials=False` is incompatible with `allow_origins=["*"]` per the CORS spec — this is correct production behavior
+- OPIK project is created automatically on first trace — no need to create it manually in the dashboard
 
 ---
 
