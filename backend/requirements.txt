@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+python-dotenv
+langchain
+langchain-openai
+langchain-groq
+langchain-community
+langchain-text-splitters
+openai
+groq
+pinecone
+opik
+requests
+beautifulsoup4
+tiktoken
+httpx

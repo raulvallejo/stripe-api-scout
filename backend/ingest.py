@@ -8,13 +8,13 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
-from langchain_chroma import Chroma
+from pinecone import Pinecone
 
 load_dotenv()
 
 SEED_URL = "https://docs.stripe.com"
-CHROMA_DIR = "./chroma_db"
-COLLECTION_NAME = "stripe_docs"
+PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
+PINECONE_INDEX_NAME = os.environ["PINECONE_INDEX_NAME"]
 CRAWLED_URLS_FILE = "crawled_urls.txt"
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
@@ -126,16 +126,29 @@ def estimate_cost(chunks: list[dict]) -> float:
 
 def embed_and_store(chunks: list[dict]) -> None:
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-    texts = [c["text"] for c in chunks]
-    metadatas = [c["metadata"] for c in chunks]
 
-    Chroma.from_texts(
-        texts=texts,
-        embedding=embeddings,
-        metadatas=metadatas,
-        collection_name=COLLECTION_NAME,
-        persist_directory=CHROMA_DIR,
-    )
+    pc = Pinecone(api_key=PINECONE_API_KEY)
+    index = pc.Index(PINECONE_INDEX_NAME)
+
+    BATCH_SIZE = 100
+    for batch_start in range(0, len(chunks), BATCH_SIZE):
+        batch = chunks[batch_start:batch_start + BATCH_SIZE]
+        texts = [c["text"] for c in batch]
+        vectors = embeddings.embed_documents(texts)
+        records = [
+            {
+                "id": f"chunk-{batch_start + i}",
+                "values": vectors[i],
+                "metadata": {
+                    "text": batch[i]["text"],
+                    "source": batch[i]["metadata"].get("source", ""),
+                },
+            }
+            for i in range(len(batch))
+        ]
+        index.upsert(vectors=records)
+        if (batch_start // BATCH_SIZE) % 100 == 0:
+            print(f"  Upserted {batch_start + len(batch)}/{len(chunks)} chunks")
 
 
 def main() -> None:
@@ -156,9 +169,9 @@ def main() -> None:
     print(f"Total chunks created: {len(chunks)}")
     print(f"Estimated embedding cost: ${cost:.4f} (text-embedding-3-small @ $0.02/1M tokens)")
 
-    print("\nEmbedding and storing in Chroma...")
+    print("\nEmbedding and storing in Pinecone...")
     embed_and_store(chunks)
-    print("Done. Chroma DB written to ./chroma_db")
+    print("Done. Vectors upserted to Pinecone.")
 
 
 if __name__ == "__main__":
