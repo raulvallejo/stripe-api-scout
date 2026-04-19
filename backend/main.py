@@ -80,7 +80,7 @@ def _run_ask(question: str, session_id: str) -> tuple[str, list[str]]:
     return response.content, sources
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def health_check():
     return {"status": "ok", "service": "Stripe API Scout"}
 
