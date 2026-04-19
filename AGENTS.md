@@ -59,6 +59,9 @@ Never commit API keys. Use a `.env` file locally and set these as secrets in you
 - Pinecone free tier is US East 1 only — latency from Europe is ~100-150ms extra but negligible for a portfolio project
 - `allow_credentials=False` is incompatible with `allow_origins=["*"]` per the CORS spec — this is correct production behavior
 - OPIK project is created automatically on first trace — no need to create it manually in the dashboard
+- `main.py` queries Pinecone using `index.query()` — each match returns metadata with `"text"` (chunk content) and `"source"` (URL). Extract both to build the answer context and sources list.
+- Pinecone query returns matches sorted by score descending — top 5 are most relevant
+- `embed_query()` is used at query time (not `embed_documents()`) — important distinction, wrong method will return wrong dimensionality
 
 ---
 
