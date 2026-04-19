@@ -551,7 +551,7 @@
       try {
         const res = await fetch(`${API_BASE}/api/ask`, {
           method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
           body:    JSON.stringify({ question, session_id: sessionId }),
         });
 
@@ -572,6 +572,7 @@
           sources: data.sources ?? [],
         });
       } catch (err) {
+        console.log('API error:', err);
         loadingEl.remove();
         appendMessage('assistant', {
           answer:  `Could not reach the server. Make sure the backend is running at ${API_BASE}.`,
