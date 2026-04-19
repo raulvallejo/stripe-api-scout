@@ -1,11 +1,13 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+import os
+
 import opik
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from langchain_chroma import Chroma
+from pinecone import Pinecone
 from langchain_openai import OpenAIEmbeddings
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -30,11 +32,8 @@ app.add_middleware(
 )
 
 embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-vector_store = Chroma(
-    collection_name="stripe_docs",
-    embedding_function=embeddings,
-    persist_directory="./chroma_db",
-)
+pc = Pinecone(api_key=os.environ["PINECONE_API_KEY"])
+index = pc.Index(os.environ["PINECONE_INDEX_NAME"])
 
 llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.1)
 
@@ -61,13 +60,15 @@ class AskResponse(BaseModel):
 
 @_safe_track(name="ask")
 def _run_ask(question: str, session_id: str) -> tuple[str, list[str]]:
-    docs = vector_store.similarity_search(question, k=5)
+    query_vector = embeddings.embed_query(question)
+    results = index.query(vector=query_vector, top_k=5, include_metadata=True)
 
-    context = "\n\n---\n\n".join(doc.page_content for doc in docs)
+    matches = results.get("matches", [])
+    context = "\n\n---\n\n".join(m["metadata"]["text"] for m in matches if m.get("metadata", {}).get("text"))
     sources = list(dict.fromkeys(
-        doc.metadata["source"]
-        for doc in docs
-        if doc.metadata.get("source")
+        m["metadata"]["source"]
+        for m in matches
+        if m.get("metadata", {}).get("source")
     ))
 
     messages = [
