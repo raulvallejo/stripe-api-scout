@@ -4,7 +4,7 @@
 
 A RAG agent that indexes Stripe's full API documentation and answers developer questions with cited, grounded responses. Built with OpenAI embeddings, Pinecone, Groq, and LangChain.
 
-> [RAG Agent Template — coming soon]
+> RAG Agent Template — coming soon
 
 ---
 
@@ -35,7 +35,20 @@ When a developer asks a question, the agent finds the most relevant doc sections
 
 ## Live demo
 
-[coming soon]
+https://stripe-api-scout.vercel.app
+
+---
+
+## Built with
+
+- OpenAI `text-embedding-3-small`
+- Pinecone
+- Groq `llama-3.3-70b-versatile`
+- LangChain
+- OPIK
+- FastAPI
+- Vercel
+- Render
 
 ---
 

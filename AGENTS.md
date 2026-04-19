@@ -62,6 +62,17 @@ Never commit API keys. Use a `.env` file locally and set these as secrets in you
 - `main.py` queries Pinecone using `index.query()` — each match returns metadata with `"text"` (chunk content) and `"source"` (URL). Extract both to build the answer context and sources list.
 - Pinecone query returns matches sorted by score descending — top 5 are most relevant
 - `embed_query()` is used at query time (not `embed_documents()`) — important distinction, wrong method will return wrong dimensionality
+- Render free tier uses Python 3.14 — OPIK shows a Pydantic V1 warning on startup but works fine, not a blocker
+- Health check must use `@app.api_route("/", methods=["GET", "HEAD"])` — HEAD-only causes 405 and UptimeRobot false alarms
+
+---
+
+## Production
+
+- **Frontend (Vercel):** https://stripe-api-scout.vercel.app
+- **Backend (Render):** https://stripe-api-scout.onrender.com
+- **Pinecone index:** stripe-api-scout (AWS us-east-1)
+- **UptimeRobot monitoring:** active, 5 min interval
 
 ---
 
